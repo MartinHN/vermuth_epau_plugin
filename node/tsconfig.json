@@ -1,0 +1,33 @@
+{
+    "compilerOptions": {
+      "target": "ES2019",
+      "module": "CommonJS",
+      "moduleResolution": "node",
+      "lib": [
+      ],
+      "outDir": "build/",
+      "sourceMap": false,
+      "inlineSources": false,
+      "inlineSourceMap": false,
+      "experimentalDecorators":false,
+      "emitDecoratorMetadata":false,
+      "esModuleInterop":true,
+      "strict":true,
+      "noImplicitAny":false,
+      "allowJs":true,
+      "baseUrl":"./src",
+      "paths": {
+        "@/*": ["./*"]
+      },
+      "noEmitOnError": false
+    },
+    "include": [
+      "src/**/*.ts",
+      "src/**/*.js"
+    ],
+  
+    "exclude": [
+      "./node_modules/*",
+      ".vscode"
+    ]
+  }
