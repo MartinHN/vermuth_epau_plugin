@@ -1,4 +1,4 @@
-const defaultTimeout = 0.1;
+const defaultTimeout = 3000;
 const intTime = 1000;
 
 
@@ -21,7 +21,13 @@ class Zone {
 
 const zones = {
   upTunnel: new Zone(['9', '16', '15', '13', '14']),
-
+  lowTunnel: new Zone(['9', '12', '11', '10']),
+  centre: new Zone(['8', '7', '17']),
+  est: new Zone(['17', '18']),
+  nordeste: new Zone(['22', '21', '20', '19']),
+  entreesud: new Zone(['1', '2', '3']),
+  sudsud: new Zone(['3', '4', '5', '6']),
+  centresud: new Zone(['6', '7', '17', '8'])
 }
 
 export const zonesMap: {[id: string]: Zone} = {
@@ -29,40 +35,40 @@ export const zonesMap: {[id: string]: Zone} = {
   tunnelWestHaut_1: new Zone([]),
 
   tunnelWestBas_0: new Zone([]),
-  tunnelWestBas_1: new Zone(['9', '12', '11', '10']),
+  tunnelWestBas_1: zones.lowTunnel,
 
   tunnelCentreHaut_0: zones.upTunnel.reversed(),  // new Zone(['1', '2']),
-  tunnelCentreHaut_1: new Zone(['3', '4']),
+  tunnelCentreHaut_1: zones.centre,
 
-  tunnelCentreBas_0: new Zone(['1', '2']),
-  tunnelCentreBas_1: new Zone(['3', '4']),
+  tunnelCentreBas_0: zones.centre,
+  tunnelCentreBas_1: zones.lowTunnel.reversed(),
 
-  chassisCentreHaut_0: new Zone(['1', '2']),
-  chassisCentreHaut_1: new Zone(['3', '4']),
+  chassisCentreHaut_0: zones.centre,
+  chassisCentreHaut_1: zones.est,
 
-  chassisCentreBas_0: new Zone(['1', '2']),
-  chassisCentreBas_1: new Zone(['3', '4']),
+  chassisCentreBas_0: zones.centre,
+  chassisCentreBas_1: zones.est,
 
-  chassisEstHaut_0: new Zone(['1', '2']),
-  chassisEstHaut_1: new Zone(['3', '4']),
+  chassisEstHaut_0: zones.nordeste,
+  chassisEstHaut_1: zones.est,
 
-  chassisEstBas_0: new Zone(['1', '2']),
-  chassisEstBas_1: new Zone(['3', '4']),
+  chassisEstBas_0: zones.est,
+  chassisEstBas_1: new Zone([]),
 
-  entreeHaut_0: new Zone(['1', '2']),
-  entreeHaut_1: new Zone(['3', '4']),
+  entreeHaut_0: zones.est,  // add 22 in index
+  entreeHaut_1: new Zone([]),
 
-  entreeBas_0: new Zone(['1', '2']),
-  entreeBas_1: new Zone(['3', '4']),
+  entreeBas_0: new Zone([]),
+  entreeBas_1: zones.entreesud,
 
-  archeSudSud_0: new Zone(['1', '2']),
-  archeSudSud_1: new Zone(['3', '4']),
+  archeSudSud_0: zones.entreesud,
+  archeSudSud_1: zones.sudsud,
 
-  archeSudWest_0: new Zone(['1', '2']),
-  archeSudWest_1: new Zone(['3', '4']),
+  archeSudWest_0: zones.sudsud,
+  archeSudWest_1: zones.centresud,
 
-  chassisCenterSud_0: new Zone(['1', '2']),
-  chassisCenterSud_1: new Zone(['3', '4']),
+  chassisCenterSud_0: zones.sudsud,
+  chassisCenterSud_1: zones.centresud,
 
 };
 
@@ -74,9 +80,15 @@ export function getFixturesForZone(name: string) {
 
 export function activateZone(name: string) {
   const z = zonesMap[name];
-  if (z && z.activity !== 1) {
+
+  if (z) {
+    const shouldNotify = z.activity !== 1;
     z.activate();
-    notifyZoneChange(name)
+    if (shouldNotify) {
+      notifyZoneChange(name)
+    }
+  } else {
+    console.error('unknown zone', name)
   }
 }
 
@@ -106,7 +118,8 @@ export function isZoneInactive(name: string) {
 setInterval(() => {
   const now = new Date().getTime()
   for (const [k, v] of Object.entries(zonesMap)) {
-    if (v.activity > 0 && (now - v.activateTime) > v.timeout) {
+    if (v.activity > 0 && ((now - v.activateTime) > v.timeout)) {
+      console.log('deactivating zone ', k)
       v.activity = 0
       notifyZoneChange(k)
     }

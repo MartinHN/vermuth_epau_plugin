@@ -58,7 +58,7 @@ export class SensorStates {
       for (const [k, v] of Object.entries(this.sensors)) {
         if ((v.name !== name) && v.name.startsWith(boxName + '_') &&
             (sensor.lastActivity - v.lastActivity) < maxPassTime) {
-          const oldNum = parseInt(v.name[v.name.length - 1]);
+          const oldNum = parseInt(v.name.split('_')[1]);
           if (this.sensorPassCB) {
             this.sensorPassCB(boxName, num, oldNum)
           }

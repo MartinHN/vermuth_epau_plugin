@@ -70,7 +70,7 @@ export class VermuthAdapter {
   }
 
   setFixtureVal(n: string, v: number) {
-    console.log('fixture', n, v);
+    // console.log('fixture', n, v);
     this.oscSender.send('/fixture', [n, v]);
   }
 
@@ -80,6 +80,7 @@ export class VermuthAdapter {
       if (ch.isRunning) {
         console.warn('restarting chase')
       }
+      console.log('starting chase')
       ch.start(l, s);
     } else {
       console.error('no chase named')
