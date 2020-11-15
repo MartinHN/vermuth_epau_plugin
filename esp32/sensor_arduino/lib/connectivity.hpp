@@ -1,15 +1,23 @@
 #include <OSCMessage.h>
 #include <WiFi.h>
+#include <WiFiMulti.h>
 
+#define MULTI 1
 namespace connectivity {
 WiFiUDP udp;
+#if MULTI
+WiFiMulti wifiMulti;
+#endif
 
 // forward declare
 bool sendPing();
 
 // values
+// const char *ssid = "Atelier MO";
+// const char *password = "sucemonbeat";
+
 const char *ssid = "tinmarphone";
-const char *password = "tinmarphone74";
+const char *password = "tinmarphone";
 std::string uid;
 unsigned long lastPingTime = 0;
 
@@ -23,7 +31,9 @@ void WiFiEvent(WiFiEvent_t event) {
   switch (event) {
   case SYSTEM_EVENT_STA_GOT_IP:
     // When connected set
-    Serial.print("WiFi connected! IP address: ");
+    Serial.print("WiFi connected to ");
+    Serial.println(WiFi.SSID());
+    Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
     // initializes the UDP state
     // This initializes the transfer buffer
@@ -37,30 +47,65 @@ void WiFiEvent(WiFiEvent_t event) {
     connected = false;
     digitalWrite(ledPin, LOW);
     break;
+  default:
+    break;
   }
 }
 void connectToWiFi() {
+#if MULTI
+  Serial.println("try connect");
+  if (wifiMulti.run(6000) != WL_CONNECTED) {
+    Serial.println("no connected");
+  };
+#else
 
   // delete old config
   WiFi.disconnect(true);
   delay(500);
   Serial.print("Tentative de connexion...");
   WiFi.begin(ssid, password);
+#endif
 }
+
 void setup(const std::string &_uid) {
   uid = _uid;
   delay(1000);
+  Serial.print("setting up : ");
+  Serial.println(uid.c_str());
   Serial.println("\n");
-  WiFi.mode(WIFI_STA);
+
   delay(100);
 
   // register event handler
   WiFi.onEvent(WiFiEvent);
-
+#if MULTI
+  wifiMulti.addAP("tinmarphone", "tinmarphone");
+  wifiMulti.addAP("Atelier MO", "sucemonbeat");
+  wifiMulti.addAP("mange ma chatte", "sucemonbeat");
+#else
+  WiFi.mode(WIFI_STA);
+#endif
   connectToWiFi();
 }
 
 bool handleConnection() {
+#if MULTI
+  auto status = wifiMulti.run();
+  if (status == WL_NO_SSID_AVAIL) {
+    // skip while scan running
+    delay(100);
+    Serial.println("scan running");
+    return false;
+  }
+  if (status != WL_CONNECTED) {
+    Serial.println("reconnecting");
+    delay(3000);
+    connectToWiFi();
+    delay(3000);
+  } else {
+    connected = true;
+  }
+#else
   if (!connected) {
     // for (int i = 0 ; i < 1; i++) {
     // 	delay(2000);
@@ -79,11 +124,15 @@ bool handleConnection() {
       }
     }
   }
+#endif
   sendPing();
   return connected;
 }
-void sendOSC(const char *addr, int id, int val) {
 
+void sendOSC(const char *addr, int id, int val) {
+  if (!connected) {
+    return;
+  }
   OSCMessage msg(addr);
   msg.add(uid.c_str());
   msg.add((int)id);
@@ -92,7 +141,8 @@ void sendOSC(const char *addr, int id, int val) {
   udp.beginMulticastPacket();
   msg.send(udp);
   udp.endPacket();
-  Serial.println("sending" + String(addr) + " " + String(val));
+  Serial.println("sending" + String(addr) + " " + String(id) + " : " +
+                 String(val));
 }
 
 bool sendPing() {

@@ -2,6 +2,8 @@ import * as mod from './index';
 
 mod.init()
 
+mod.sensorServer.disconnect();
+
 
 const timeL = 4000
 let v = 0;
@@ -22,6 +24,6 @@ function setSensor(name: string, subSensor: number, value: number) {
 }
 
 
-mod.vermuthSender.addNamedChase('test', ['1'])
+// mod.vermuthSender.addNamedChase('test', ['1'])
 test()
 setInterval(test, timeL);

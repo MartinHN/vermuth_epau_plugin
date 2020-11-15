@@ -4,17 +4,20 @@ const intTime = 1000;
 
 class Zone {
   public activity = 0;
-  public activateTime = 0
-  constructor(public fixtures: Array<string>, public timeout = defaultTimeout) {
+  public activateTime = 0;
+  
+  constructor(public fixtures: Array<string>,public timesFadeIn?: Array<number>,public timeout = defaultTimeout ) {
   }
+
   activate() {
     this.activateTime = new Date().getTime();
     this.activity = 1;
   }
 
   reversed() {
-    const fs = this.fixtures.slice().reverse()
-    return new Zone(fs, this.timeout)
+    const fs = this.fixtures.slice().reverse();
+    const reversedTimes = this.timesFadeIn?.slice().reverse();
+    return new Zone(fs, reversedTimes,this.timeout)
   }
 };
 
@@ -24,6 +27,7 @@ const zones = {
   lowTunnel: new Zone(['9', '12', '11', '10']),
   centre: new Zone(['8', '7', '17']),
   est: new Zone(['17', '18']),
+  estAndEntree: new Zone(['17', '18','22']),
   nordeste: new Zone(['22', '21', '20', '19']),
   entreesud: new Zone(['1', '2', '3']),
   sudsud: new Zone(['3', '4', '5', '6']),
@@ -31,44 +35,57 @@ const zones = {
 }
 
 export const zonesMap: {[id: string]: Zone} = {
-  tunnelWestHaut_0: zones.upTunnel,
-  tunnelWestHaut_1: new Zone([]),
+  // tunnelWestHaut
+  0_0: zones.upTunnel,
+  0_1: new Zone([]), 
 
-  tunnelWestBas_0: new Zone([]),
-  tunnelWestBas_1: zones.lowTunnel,
+  // tunnelWestBas
+  1_0: new Zone([]),
+  1_1: zones.lowTunnel,
 
-  tunnelCentreHaut_0: zones.upTunnel.reversed(),  // new Zone(['1', '2']),
-  tunnelCentreHaut_1: zones.centre,
+  // tunnelCentreHaut
+  2_0: zones.upTunnel.reversed(),  // new Zone(['1', '2']),
+  2_1: zones.centre,
 
-  tunnelCentreBas_0: zones.centre,
-  tunnelCentreBas_1: zones.lowTunnel.reversed(),
+  // tunnelCentreBas
+  3_0: zones.centre,
+  3_1: zones.lowTunnel.reversed(),
 
-  chassisCentreHaut_0: zones.centre,
-  chassisCentreHaut_1: zones.est,
+  // chassisCentreHaut
+  4_0: zones.centre,
+  4_1: zones.est,
 
-  chassisCentreBas_0: zones.centre,
-  chassisCentreBas_1: zones.est,
+  // chassisCentreBas
+  5_0: zones.centre,
+  5_1: zones.est,
 
-  chassisEstHaut_0: zones.nordeste,
-  chassisEstHaut_1: zones.est,
+  // chassisEstHaut
+  6_0: zones.nordeste,
+  6_1: zones.est,
 
-  chassisEstBas_0: zones.est,
-  chassisEstBas_1: new Zone([]),
+  // chassisEstBas
+  7_0: zones.est,
+  7_1: new Zone([]),
 
-  entreeHaut_0: zones.est,  // add 22 in index
-  entreeHaut_1: new Zone([]),
+  // entreeHaut
+  8_0: zones.estAndEntree,  // add 22 in index
+  8_1: new Zone([]),
 
-  entreeBas_0: new Zone([]),
-  entreeBas_1: zones.entreesud,
+  // entreeBas
+  9_0: new Zone([]),
+  9_1: zones.entreesud,
 
-  archeSudSud_0: zones.entreesud,
-  archeSudSud_1: zones.sudsud,
+  // archeSudSud
+  A_0: zones.entreesud,
+  A_1: zones.sudsud,
 
-  archeSudWest_0: zones.sudsud,
-  archeSudWest_1: zones.centresud,
+  // archeSudWest
+  B_0: zones.sudsud,
+  B_1: zones.centresud,
 
-  chassisCenterSud_0: zones.sudsud,
-  chassisCenterSud_1: zones.centresud,
+  // chassisCenterSud
+  C_0: zones.sudsud,
+  C_1: zones.centresud,
 
 };
 
@@ -110,11 +127,12 @@ export function getFixtureValues() {
 export function hasZone(name: string) {
   return name in zonesMap
 }
+
 export function isZoneInactive(name: string) {
   return (hasZone(name)) ? zonesMap[name].activity == 0 : true;
 }
 
-
+// chiecks inactivity
 setInterval(() => {
   const now = new Date().getTime()
   for (const [k, v] of Object.entries(zonesMap)) {
@@ -135,4 +153,12 @@ function notifyZoneChange(name: string) {
   if (zoneChangeCB) {
     zoneChangeCB(name, zonesMap[name])
   }
+}
+
+export function getAllFixtures(){
+  const fs = new Set<string>();
+ Object.values(zones).map(z=>{
+   Object.values(z.fixtures).map(ee=>fs.add(ee))
+  })
+ return Array.from(fs)
 }

@@ -1,4 +1,4 @@
-const maxPassTime = 3000;
+const maxPassTime = 6000;
 class SensorState {
   constructor(public name: string) {};
   public state: boolean|undefined;
@@ -16,7 +16,7 @@ class SensorState {
     if (state) {
       this.lastActivity = now;
     }
-    const hasChange = state != this.state
+      const hasChange = state != this.state
     if (hasChange) {
       this.deltaT = now - this.lastChangeActivity;
       this.lastChangeActivity = now;
@@ -55,15 +55,24 @@ export class SensorStates {
     if (value && nameSplit.length > 1) {
       const num = parseInt(nameSplit[1]);
       const boxName = nameSplit[0];
-      for (const [k, v] of Object.entries(this.sensors)) {
-        if ((v.name !== name) && v.name.startsWith(boxName + '_') &&
-            (sensor.lastActivity - v.lastActivity) < maxPassTime) {
-          const oldNum = parseInt(v.name.split('_')[1]);
-          if (this.sensorPassCB) {
-            this.sensorPassCB(boxName, num, oldNum)
-          }
-        }
+      const curNum = parseInt(nameSplit[1]);
+      const otherNum = curNum===1?0:1;
+      const otherSensorName = boxName+'_'+otherNum;
+      const  otherSensor = this.sensors[otherSensorName];
+      console.log("check pass",boxName);
+     if(otherSensor){
+       const deltaAct = sensor.lastActivity - otherSensor.lastActivity ;
+       console.log(deltaAct);
+      if(this.sensorPassCB && 
+       (  deltaAct< maxPassTime)){
+       
+        this.sensorPassCB(boxName, num, otherNum)
       }
+     }
+     else{
+       console.warn("no sensor found :",boxName);
+     }
+    
     }
 
     this.updateState(name, hasChange);

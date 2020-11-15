@@ -2,9 +2,10 @@
 import {OSCServerModule} from './OSCServerModule'
 import {SensorStates} from './SensorStates'
 import {VermuthAdapter} from './VermuthAdapter'
-import {activateZone, setZoneChangeCB, zonesMap} from './zones';
+import {activateZone, setZoneChangeCB, zonesMap,getAllFixtures} from './zones';
 
 const fadeoutTime = 5000
+const lightRestValue = .5;
 
 export const sensorServer = new OSCServerModule(processMsg);
 export const vermuthSender = new VermuthAdapter();
@@ -12,22 +13,22 @@ const sStates = new SensorStates(sensorActivity, passCB)
 
 for (const [k, v] of Object.entries(zonesMap)) {
   const fs = v.fixtures.slice()
-  if (k == 'entreeHaut_0') {
-    fs.push('22');
-  }
-  vermuthSender.addNamedChase(k, fs)
+
+  vermuthSender.addNamedChase(k, fs,v.timesFadeIn)
 }
 
 setZoneChangeCB((name, z) => {
   if (z.activity == 0) {
-    vermuthSender.fadeFixturesTo(z.fixtures, 0, fadeoutTime);
+    console.log('fading zone out ',name)
+    vermuthSender.fadeFixturesTo(z.fixtures, lightRestValue, fadeoutTime);
   }
 })
+
 function sensorActivity(name: string, hasChange: boolean, v) {
   console.log(hasChange ? 'change' : 'update', name);
 
   if (v.state) {
-    playSound(name.endsWith('0'));
+    // playSound(name.endsWith('0'));
     activateZone(name);
   }
 }
@@ -38,6 +39,7 @@ function passCB(name: string, num: number, oldNum: number) {
   const z = zonesMap[fullName];
   if (!z) {
     console.warn('unknown zone');
+    return;
   }
   console.log(z.activity);
   if (z && z.activity <= 0) {
@@ -51,7 +53,9 @@ function updateLight() {}
 export function init() {
   sensorServer.connect(OSCServerModule.getMulticastIp(), 4000);
   vermuthSender.init()
-  console.log('module initialized !!!!!!!!!!!!!!!!!!')
+  console.log('module initialized !!!!!!!!!!!!!!!!!!');
+  console.log(getAllFixtures())
+  setTimeout(()=>{vermuthSender.fadeFixturesTo(getAllFixtures(),lightRestValue,4000)},300);
 }
 
 

@@ -20,6 +20,7 @@ const osc = require('osc');
 export class OSCServerModule {
   public udpPort: any;
   private timeout: any;
+  private disconnected = false;
   constructor(private msgCb: any = undefined) {}
   static getMulticastIp() {
     return '230.1.1.1'
@@ -40,7 +41,7 @@ export class OSCServerModule {
         }) :
         undefined  //[{address: ip, interface: localIp}] : undefined
     console.log(membership)
-
+    
     const udpPort = new osc.UDPPort({
       localAddress: localIp,  // broadcast//0.0.0.0",
       localPort: this.msgCb ? port : undefined,
@@ -71,9 +72,24 @@ export class OSCServerModule {
       console.error('OSC Module connection error', err);
       this.defferReconnect(udpPort)
     });
+    
     this.tryReConnect(udpPort)
   }
+
+  disconnect(){
+    if(this.udpPort){
+      console.error("disconnect",this.udpPort);
+      clearTimeout(this.udpPort.timeout);
+      this.disconnected = true;
+    }
+    else{
+      console.error("can't disconnect");
+    }
+  }
   defferReconnect(port: any) {
+    if(this.disconnected){
+      return;
+    }
     clearTimeout(port.timeout)
     port.timeout = setTimeout(this.tryReConnect.bind(this, port), 1000);
   }
@@ -82,13 +98,15 @@ export class OSCServerModule {
       clearTimeout(this.timeout)
       return;
     }
-    console.warn('try connect')
+    console.warn('try connect',port.options)
     try {
       port.open();
     } catch {
       console.error('can\'t connect to ', port.localAddress, port.localPort)
     }
+    if(this.msgCb){
     this.defferReconnect(port)
+  }
   }
   public processMsg(msg: any, time: any, info: any) {
     if (this.msgCb) {
